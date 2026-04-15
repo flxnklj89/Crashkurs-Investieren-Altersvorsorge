@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crashkurs: Investieren & Altersvorsorge</title>
+  <meta name="description" content="Interaktive Website zu Investieren, ETF-Sparen, Depot-Aufbau und Altersvorsorge mit Simulator." />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-soft: #121935;
+      --card: rgba(255,255,255,0.07);
+      --card-strong: rgba(255,255,255,0.11);
+      --text: #eef2ff;
+      --muted: #b9c3e6;
+      --accent: #70e1c8;
+      --accent-2: #8cb8ff;
+      --danger: #ff9b9b;
+      --warning: #ffd28a;
+      --success: #8ef0b8;
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 18px 45px rgba(0,0,0,0.25);
+      --radius: 22px;
+      --radius-sm: 16px;
+      --content-width: 1200px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(112,225,200,0.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(140,184,255,0.18), transparent 22%),
+        linear-gradient(180deg, #0b1020 0%, #121936 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(100%, var(--content-width));
+      margin: 0 auto;
+      padding: 0 18px 56px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 28, 0.72);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .topbar-inner {
+      width: min(100%, var(--content-width));
+      margin: 0 auto;
+      padding: 12px 18px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .brand-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0d1326;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 11px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: linear-gradient(135deg, rgba(112,225,200,0.2), rgba(140,184,255,0.16));
+      border-color: rgba(140,184,255,0.45);
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      padding: 34px 0 22px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .hero-card,
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-card {
+      padding: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 0.92rem;
+      border: 1px solid var(--border);
+    }
+
+    h1, h2, h3 { margin: 0 0 14px; line-height: 1.15; }
+    h1 { font-size: clamp(2rem, 5vw, 3.6rem); }
+    h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); }
+    h3 { font-size: 1.15rem; }
+    p { margin: 0 0 14px; color: var(--muted); }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 13px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, rgba(112,225,200,0.26), rgba(140,184,255,0.26));
+      color: white;
+    }
+
+    .hero-stats {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat {
+      padding: 20px;
+      border-radius: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      min-height: 128px;
+    }
+
+    .stat .value {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .section {
+      margin-top: 22px;
+    }
+
+    .section-header {
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .card { padding: 22px; }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    ul.clean {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    ul.clean li {
+      padding: 14px 15px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+    }
+
+    .mini-note {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .highlight {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .risk-low { color: var(--success); font-weight: 700; }
+    .risk-mid { color: var(--warning); font-weight: 700; }
+    .risk-high { color: var(--danger); font-weight: 700; }
+
+    .toc {
+      position: sticky;
+      top: 90px;
+      align-self: start;
+    }
+
+    .toc a {
+      display: block;
+      text-decoration: none;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      transition: 0.2s ease;
+    }
+
+    .toc a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    th, td {
+      padding: 14px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    th {
+      font-size: 0.9rem;
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+    }
+
+    td { color: var(--muted); }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .field small {
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(12,17,37,0.85);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(140,184,255,0.5);
+      box-shadow: 0 0 0 4px rgba(140,184,255,0.14);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .result-box {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .result-box .label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .result-box .number {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 800;
+    }
+
+    .chart-box {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 18px;
+    }
+
+    .hint {
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      border-radius: 14px;
+      background: rgba(112,225,200,0.08);
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 0.93rem;
+      text-align: center;
+    }
+
+    .accordion details {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      padding: 14px 16px;
+    }
+
+    .accordion details + details { margin-top: 12px; }
+    .accordion summary { cursor: pointer; font-weight: 700; }
+    .accordion .content { padding-top: 12px; color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    @media (max-width: 1024px) {
+      .hero,
+      .sim-layout,
+      .grid.two,
+      .grid.three,
+      .grid.four,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toc { position: static; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 0 14px 40px; }
+      .hero-card, .card, .stat { padding: 18px; }
+      .hero-stats { grid-template-columns: 1fr; }
+      .topbar-inner { padding: 10px 14px; }
+      .nav { width: 100%; }
+      .nav button { flex: 1 1 auto; }
+      .button { width: 100%; }
+      .hero-actions { flex-direction: column; }
+      h1 { font-size: 2.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-badge">€</div>
+        <div>
+          <div>Crashkurs: Investieren & Altersvorsorge</div>
+          <div class="mini-note">Verstehen, aufbauen, simulieren</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Hauptnavigation">
+        <button class="tab-button active" data-target="wissen">Seite 1 · Wissen</button>
+        <button class="tab-button" data-target="simulator">Seite 2 · Depot-Simulator</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">Einfach erklärt · mobil optimiert · interaktiv nutzbar</div>
+        <h1>Investieren verständlich machen – ohne unnötige Komplexität</h1>
+        <p>
+          Diese Website bündelt die wichtigsten Grundlagen zu <span class="highlight">Depot, ETFs, Risikostreuung, langfristigem Vermögensaufbau und Altersvorsorge</span>.
+          Auf der zweiten Seite kannst du mit wenigen Parametern im Browser durchspielen, wie sich ein Depot über viele Jahre entwickeln kann.
+        </p>
+        <div class="hero-actions">
+          <a href="#schnellstart" class="button primary">Direkt zum Schnellstart</a>
+          <button class="button" type="button" onclick="switchTab('simulator')">Zum Simulator</button>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="value">3 Hebel</div>
+          <div class="highlight">Zeit · Sparrate · Rendite</div>
+          <p>Diese drei Faktoren bestimmen den langfristigen Vermögensaufbau stärker als kurzfristige Marktmeinungen.</p>
+        </div>
+        <div class="stat">
+          <div class="value">1 Depot</div>
+          <div class="highlight">als Einstiegspunkt</div>
+          <p>Ohne Depot ist Vermögensaufbau am Kapitalmarkt praktisch nicht umsetzbar.</p>
+        </div>
+        <div class="stat">
+          <div class="value">ETF</div>
+          <div class="highlight">für breite Streuung</div>
+          <p>Weltweit investierende ETFs bündeln viele Unternehmen in einem Produkt.</p>
+        </div>
+        <div class="stat">
+          <div class="value">Langfristig</div>
+          <div class="highlight">schlägt Aktionismus</div>
+          <p>Konstanz und Disziplin sind für Einsteiger meist wichtiger als perfektes Timing.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="wissen" class="page active">
+      <div class="grid two section">
+        <aside class="card toc">
+          <h3>Inhaltsübersicht</h3>
+          <a href="#schnellstart">Schnellstart</a>
+          <a href="#warum-depot">Warum ein Depot wichtig ist</a>
+          <a href="#grundlagen">Die wichtigsten Grundlagen</a>
+          <a href="#etf-verstehen">ETF einfach erklärt</a>
+          <a href="#world-em">World & Emerging Markets</a>
+          <a href="#risiken">Risiken richtig einordnen</a>
+          <a href="#vorsorge">Altersvorsorge</a>
+          <a href="#kinderdepot">Kinderdepot</a>
+          <a href="#fehler">Häufige Fehler</a>
+          <a href="#naechste-schritte">Nächste Schritte</a>
+        </aside>
+
+        <div class="grid">
+          <section id="schnellstart" class="card">
+            <div class="section-header">
+              <div>
+                <div class="badge">Schnellstart</div>
+                <h2>Die 5 Kernideen auf einen Blick</h2>
+              </div>
+            </div>
+            <div class="grid two">
+              <ul class="clean">
+                <li><span class="highlight">1. Depot eröffnen:</span> Ohne Depot kannst du keine ETFs oder Aktien kaufen. Es ist die technische Grundlage für deinen Vermögensaufbau.</li>
+                <li><span class="highlight">2. Einfach starten:</span> Für viele Einsteiger reicht ein weltweit streuender ETF bereits als solides Fundament.</li>
+                <li><span class="highlight">3. Früh anfangen:</span> Zeit wirkt über den Zinseszinseffekt. Frühere Jahre sind oft wertvoller als spätere höhere Sparraten.</li>
+              </ul>
+              <ul class="clean">
+                <li><span class="highlight">4. Regelmäßig besparen:</span> Ein Sparplan reduziert die Hürde, ständig Kaufentscheidungen treffen zu müssen.</li>
+                <li><span class="highlight">5. Langfristig denken:</span> Marktphasen mit Rückgängen gehören dazu. Entscheidend ist, ob die Strategie robust bleibt.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="warum-depot" class="card">
+            <h2>Warum ein Depot so wichtig ist</h2>
+            <p>
+              Ein Depot ist der Ort, an dem deine Wertpapiere verwahrt werden. Ein Girokonto oder Tagesgeldkonto reicht dafür nicht aus.
+              Wer langfristig Vermögen aufbauen, für Kinder vorsorgen oder die eigene Altersvorsorge stärken will, braucht in der Praxis fast immer ein Depot.
+            </p>
+            <div class="grid three">
+              <div class="result-box">
+                <div class="label">Ohne Depot</div>
+                <div class="number">kein ETF-Kauf</div>
+                <p class="mini-note">Du bleibst auf Sparprodukte mit meist geringerer Renditeerwartung beschränkt.</p>
+              </div>
+              <div class="result-box">
+                <div class="label">Mit Depot</div>
+                <div class="number">Kapitalmarktzugang</div>
+                <p class="mini-note">Du kannst in ETFs, Aktien, Fonds oder Anleihen investieren.</p>
+              </div>
+              <div class="result-box">
+                <div class="label">Mit Sparplan</div>
+                <div class="number">Automatisierung</div>
+                <p class="mini-note">Regelmäßiges Investieren wird planbar und bequem.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="grundlagen" class="card">
+            <h2>Die wichtigsten Grundlagen für Einsteiger</h2>
+            <div class="grid two">
+              <div>
+                <h3>Was ist eine Aktie?</h3>
+                <p>Eine Aktie ist ein Unternehmensanteil. Du beteiligst dich wirtschaftlich an einem Unternehmen und profitierst oder leidest mit dessen Entwicklung.</p>
+                <h3>Was ist ein ETF?</h3>
+                <p>Ein ETF ist ein börsengehandelter Fonds. Er bildet meist einen Index nach, zum Beispiel einen Weltaktienindex.</p>
+                <h3>Was bedeutet Rendite?</h3>
+                <p>Rendite ist der Ertrag deiner Anlage. Sie setzt sich meist aus Kursentwicklung und gegebenenfalls Ausschüttungen zusammen.</p>
+              </div>
+              <div>
+                <h3>Was bedeutet Risiko?</h3>
+                <p>Risiko heißt im Investment-Kontext vor allem: Schwankung, Unsicherheit und die Möglichkeit von temporären oder dauerhaften Verlusten.</p>
+                <h3>Warum streuen?</h3>
+                <p>Breite Streuung senkt das Einzelwertrisiko. Du bist weniger davon abhängig, ob ein einzelnes Unternehmen oder Land enttäuscht.</p>
+                <h3>Warum Zeit so wichtig ist</h3>
+                <p>Je länger das Geld investiert bleibt, desto stärker kann der Zinseszinseffekt wirken. Zeit ist ein zentraler Renditetreiber.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="etf-verstehen" class="card">
+            <h2>ETF einfach erklärt</h2>
+            <p>
+              Ein ETF eignet sich für viele Einsteiger, weil er drei Probleme gleichzeitig löst: <span class="highlight">Streuung, Einfachheit und Skalierbarkeit</span>.
+              Statt selbst dutzende Einzelaktien auszuwählen, kaufst du mit einem ETF auf einen Schlag viele Unternehmen.
+            </p>
+            <div class="grid four">
+              <div class="result-box">
+                <div class="label">Breite</div>
+                <div class="number">viele Titel</div>
+              </div>
+              <div class="result-box">
+                <div class="label">Einfachheit</div>
+                <div class="number">1 Produkt</div>
+              </div>
+              <div class="result-box">
+                <div class="label">Kosten</div>
+                <div class="number">oft effizient</div>
+              </div>
+              <div class="result-box">
+                <div class="label">Nutzung</div>
+                <div class="number">per Sparplan</div>
+              </div>
+            </div>
+            <div class="hint" style="margin-top:16px;">
+              Für viele Menschen ist nicht die Frage entscheidend, ob sie den perfekten ETF finden, sondern ob sie überhaupt diszipliniert und langfristig investieren.
+            </div>
+          </section>
+
+          <section id="world-em" class="card">
+            <h2>World ETF und Emerging Markets ETF verständlich eingeordnet</h2>
+            <p>
+              Viele langfristige Strategien kombinieren einen <span class="highlight">World ETF</span> als Kernbaustein mit einem <span class="highlight">Emerging Markets ETF</span> als Ergänzung.
+              Der World-Teil deckt überwiegend entwickelte Märkte ab, während Emerging Markets Schwellenländer beimischen.
+            </p>
+            <div class="grid two">
+              <div>
+                <h3>World ETF</h3>
+                <ul class="clean">
+                  <li><span class="highlight">Zweck:</span> globales Grundgerüst für das Depot</li>
+                  <li><span class="highlight">Typisch:</span> Fokus auf entwickelte Länder</li>
+                  <li><span class="highlight">Sektoren:</span> häufig hoher Anteil Technologie, Finanzen, Gesundheit, Industrie und Basiskonsum</li>
+                  <li><span class="highlight">Regionen:</span> USA meist besonders stark vertreten, dazu Europa und Asien/Pazifik</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Emerging Markets ETF</h3>
+                <ul class="clean">
+                  <li><span class="highlight">Zweck:</span> Ergänzung um Schwellenländer</li>
+                  <li><span class="highlight">Typisch:</span> höhere Schwankung als entwickelte Märkte</li>
+                  <li><span class="highlight">Sektoren:</span> oft stärker geprägt von Finanzen, Technologie, Industrie und Rohstoffnähe</li>
+                  <li><span class="highlight">Regionen:</span> häufig Asien dominant, ergänzt um Lateinamerika, Osteuropa, Nahost und Afrika</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="table-wrap" style="margin-top:16px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Baustein</th>
+                    <th>Rolle im Depot</th>
+                    <th>Vorteil</th>
+                    <th>Möglicher Nachteil</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>World ETF</td>
+                    <td>stabile Kernallokation</td>
+                    <td>einfach, breit, gut nachvollziehbar</td>
+                    <td>Schwellenländer nur indirekt oder gar nicht enthalten</td>
+                  </tr>
+                  <tr>
+                    <td>EM ETF</td>
+                    <td>Ergänzung für mehr globale Breite</td>
+                    <td>zusätzliche Länder und Wachstumsräume</td>
+                    <td>höhere Volatilität und längere Durststrecken möglich</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="risiken" class="card">
+            <h2>Risiken richtig einordnen</h2>
+            <div class="grid three">
+              <div class="result-box">
+                <div class="label">Kurzfristige Schwankung</div>
+                <div class="number risk-mid">normal</div>
+                <p class="mini-note">Marktbewegungen von Wochen oder Monaten sind an der Börse üblich.</p>
+              </div>
+              <div class="result-box">
+                <div class="label">Einzelwertrisiko</div>
+                <div class="number risk-high">hoch</div>
+                <p class="mini-note">Bei wenigen Einzelaktien kann ein Fehlgriff das Ergebnis stark belasten.</p>
+              </div>
+              <div class="result-box">
+                <div class="label">Streuung über ETFs</div>
+                <div class="number risk-low">sinnvoll</div>
+                <p class="mini-note">Breite Streuung senkt das Risiko einzelner Ausfälle deutlich.</p>
+              </div>
+            </div>
+            <div class="accordion" style="margin-top:16px;">
+              <details open>
+                <summary>Was viele Einsteiger mit Risiko verwechseln</summary>
+                <div class="content">Nicht jede rote Zahl bedeutet, dass die Strategie falsch ist. Ein temporärer Rückgang ist etwas anderes als ein struktureller Fehler im Depotaufbau.</div>
+              </details>
+              <details>
+                <summary>Was wirklich gefährlich werden kann</summary>
+                <div class="content">Zu kurze Zeithorizonte, Panikverkäufe, fehlende Liquiditätsreserve, zu hohe Konzentration auf einzelne Titel oder das Investieren ohne Plan.</div>
+              </details>
+            </div>
+          </section>
+
+          <section id="vorsorge" class="card">
+            <h2>Warum private Altersvorsorge so wichtig ist</h2>
+            <p>
+              Wer sich allein auf die gesetzliche Rente verlässt, riskiert später eine Versorgungslücke. Private Vorsorge über Kapitalmarktprodukte kann helfen,
+              Kaufkraftverlust durch Inflation auszugleichen und selbstbestimmter Vermögen aufzubauen.
+            </p>
+            <div class="grid two">
+              <ul class="clean">
+                <li><span class="highlight">Inflation:</span> Geld verliert langfristig Kaufkraft.</li>
+                <li><span class="highlight">Lebensstandard:</span> Wer heute vorsorgt, erhöht die Chance, später den gewünschten Lebensstil zu halten.</li>
+                <li><span class="highlight">Flexibilität:</span> Depotvermögen ist im Vergleich zu vielen starren Lösungen oft flexibler nutzbar.</li>
+              </ul>
+              <ul class="clean">
+                <li><span class="highlight">Zeithebel:</span> Jahrzehnte wirken stark zugunsten früher Starter.</li>
+                <li><span class="highlight">Planbarkeit:</span> Ein automatischer Sparplan lässt sich langfristig sauber in den Alltag integrieren.</li>
+                <li><span class="highlight">Eigenverantwortung:</span> Wer sein System versteht, trifft bessere finanzielle Entscheidungen.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="kinderdepot" class="card">
+            <h2>Kinderdepot: Warum frühes Investieren extrem stark sein kann</h2>
+            <p>
+              Ein Kinderdepot nutzt vor allem einen Faktor maximal aus: <span class="highlight">Zeit</span>. Bereits kleine monatliche Sparraten können über sehr lange Zeiträume große Wirkung entfalten.
+              Besonders stark wird es, wenn das Depot nach dem 18. Geburtstag nicht aufgelöst wird, sondern weiter investiert bleibt.
+            </p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sparphase</th>
+                    <th>Gedanke</th>
+                    <th>Wirkung</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>0 bis 18</td>
+                    <td>früher Vermögensaufbau mit kleinen Beträgen</td>
+                    <td>starke Basis bis zur Volljährigkeit</td>
+                  </tr>
+                  <tr>
+                    <td>18 bis 67 ohne weitere Einzahlung</td>
+                    <td>das Kapital arbeitet allein weiter</td>
+                    <td>Zinseszinseffekt entfaltet sich weiter</td>
+                  </tr>
+                  <tr>
+                    <td>18 bis 67 mit weiterer Sparrate</td>
+                    <td>Frühe Basis plus zusätzliche Einzahlungen</td>
+                    <td>potenziell sehr großer Vermögenshebel</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="hint" style="margin-top:16px;">
+              Genau solche Szenarien kannst du auf Seite 2 mit dem Simulator nachbauen – inklusive Startkapital, Sparrate, Laufzeit und angenommener Rendite.
+            </div>
+          </section>
+
+          <section id="fehler" class="card">
+            <h2>Die häufigsten Fehler am Anfang</h2>
+            <div class="grid two">
+              <ul class="clean">
+                <li><span class="highlight">Zu spät anfangen</span> und den Zeiteffekt unterschätzen.</li>
+                <li><span class="highlight">Zu kompliziert starten</span> statt zuerst ein solides Grundsystem zu bauen.</li>
+                <li><span class="highlight">Panik in Korrekturen</span> und Verkäufe ohne Plan.</li>
+                <li><span class="highlight">Keine Liquiditätsreserve</span> für kurzfristige Ausgaben.</li>
+              </ul>
+              <ul class="clean">
+                <li><span class="highlight">Renditejagd</span> ohne Risikoverständnis.</li>
+                <li><span class="highlight">Zu viele Einzelpositionen</span> ohne echten Mehrwert.</li>
+                <li><span class="highlight">Steuern und Kosten ignorieren</span>.</li>
+                <li><span class="highlight">Ohne Ziel investieren</span> statt mit klarer Strategie.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="naechste-schritte" class="card">
+            <h2>Nächste Schritte für Einsteiger</h2>
+            <div class="grid three">
+              <div class="result-box">
+                <div class="label">Schritt 1</div>
+                <div class="number">Depot eröffnen</div>
+                <p class="mini-note">Einfaches, günstiges und gut bedienbares Depot auswählen.</p>
+              </div>
+              <div class="result-box">
+                <div class="label">Schritt 2</div>
+                <div class="number">Strategie festlegen</div>
+                <p class="mini-note">Zum Beispiel Welt-ETF allein oder World plus EM als klare Struktur.</p>
+              </div>
+              <div class="result-box">
+                <div class="label">Schritt 3</div>
+                <div class="number">Sparplan starten</div>
+                <p class="mini-note">Klein starten ist besser als ideal planen und gar nicht anfangen.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="simulator" class="page">
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <div class="badge">Interaktiv</div>
+            <h2>Depot-Simulator</h2>
+            <p>Spiele im Browser durch, wie sich ein Depot über Jahre entwickeln kann. Die Berechnung ist bewusst einfach und für Endnutzer leicht verständlich gehalten.</p>
+          </div>
+        </div>
+
+        <div class="sim-layout">
+          <aside class="card">
+            <h3>Parameter</h3>
+            <div class="form-grid">
+              <div class="field">
+                <label for="startCapital">Startkapital in €</label>
+                <input id="startCapital" type="number" min="0" step="100" value="10000" />
+                <small>Einmaliger Startbetrag zu Beginn.</small>
+              </div>
+              <div class="field">
+                <label for="monthlySavings">Monatliche Sparrate in €</label>
+                <input id="monthlySavings" type="number" min="0" step="10" value="250" />
+                <small>Wird monatlich investiert.</small>
+              </div>
+              <div class="field">
+                <label for="years">Anlagedauer in Jahren</label>
+                <input id="years" type="number" min="1" max="80" step="1" value="25" />
+                <small>Zeitraum der Simulation.</small>
+              </div>
+              <div class="field">
+                <label for="annualReturn">Erwartete Rendite p.a. in %</label>
+                <input id="annualReturn" type="number" min="0" max="20" step="0.1" value="7" />
+                <small>Nominale Durchschnittsrendite pro Jahr.</small>
+              </div>
+              <div class="field">
+                <label for="inflation">Inflation p.a. in %</label>
+                <input id="inflation" type="number" min="0" max="10" step="0.1" value="2" />
+                <small>Optional zur Einordnung der Kaufkraft.</small>
+              </div>
+              <div class="field">
+                <label for="taxRate">Steuersatz auf Gewinne in %</label>
+                <input id="taxRate" type="number" min="0" max="40" step="0.1" value="26.375" />
+                <small>Einfaches Modell für die Besteuerung des Gewinnanteils am Ende.</small>
+              </div>
+              <div class="field">
+                <label for="mode">Darstellung</label>
+                <select id="mode">
+                  <option value="standard">Standard</option>
+                  <option value="child18">Kinderdepot: Einzahlung stoppt mit 18</option>
+                  <option value="child60">Kinderdepot: Einzahlung läuft bis 60 weiter</option>
+                </select>
+                <small>Für einfache Szenarien ohne komplizierte Eingaben.</small>
+              </div>
+              <button class="button primary" type="button" onclick="runSimulation()">Simulation aktualisieren</button>
+            </div>
+          </aside>
+
+          <div class="grid">
+            <div class="result-grid">
+              <div class="result-box">
+                <div class="label">Endwert vor Steuern</div>
+                <div class="number" id="finalGross">–</div>
+              </div>
+              <div class="result-box">
+                <div class="label">Steuern auf Gewinn</div>
+                <div class="number" id="taxes">–</div>
+              </div>
+              <div class="result-box">
+                <div class="label">Endwert nach Steuern</div>
+                <div class="number" id="finalNet">–</div>
+              </div>
+              <div class="result-box">
+                <div class="label">Kaufkraft heute</div>
+                <div class="number" id="realValue">–</div>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              <canvas id="portfolioChart" height="120"></canvas>
+            </div>
+
+            <div class="grid two">
+              <div class="card">
+                <h3>Was die Werte bedeuten</h3>
+                <ul class="clean">
+                  <li><span class="highlight">Endwert vor Steuern:</span> Depotwert auf Basis der gewählten Renditeannahme.</li>
+                  <li><span class="highlight">Steuern auf Gewinn:</span> stark vereinfachtes Modell, nur auf den Gewinnanteil zum Ende.</li>
+                  <li><span class="highlight">Endwert nach Steuern:</span> der vereinfachte Nettowert nach Abzug der Steuer.</li>
+                  <li><span class="highlight">Kaufkraft heute:</span> grobe Umrechnung des Nettowerts unter Berücksichtigung der Inflation.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Wichtige Hinweise</h3>
+                <ul class="clean">
+                  <li>Die Simulation ist ein <span class="highlight">vereinfachtes Rechenmodell</span>, keine Prognose.</li>
+                  <li>Kapitalmärkte verlaufen nicht linear. Reale Ergebnisse schwanken teils deutlich.</li>
+                  <li>Steuern, Teilfreistellung, Freibeträge, Vorabpauschale und Gebühren sind hier bewusst vereinfacht.</li>
+                  <li>Für konkrete Entscheidungen sind echte Depotkonditionen und steuerliche Rahmenbedingungen zusätzlich zu prüfen.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Jahresübersicht</h3>
+              <div class="table-wrap">
+                <table id="yearTable">
+                  <thead>
+                    <tr>
+                      <th>Jahr</th>
+                      <th>Einzahlungen kumuliert</th>
+                      <th>Depotwert vor Steuern</th>
+                      <th>Gewinn</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div class="footer-note">
+      Diese HTML-Datei ist so aufgebaut, dass sie direkt als einzelne Datei auf GitHub Pages gehostet werden kann.
+    </div>
+  </main>
+
+  <script>
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const pages = document.querySelectorAll('.page');
+
+    function switchTab(target) {
+      pages.forEach(page => page.classList.toggle('active', page.id === target));
+      tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.target === target));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (target === 'simulator') {
+        setTimeout(() => {
+          if (portfolioChart) portfolioChart.resize();
+        }, 120);
+      }
+    }
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => switchTab(button.dataset.target));
+    });
+
+    const fmt = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    const fmtDec = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+    const yearTableBody = document.querySelector('#yearTable tbody');
+
+    let portfolioChart;
+
+    function createChart(labels, grossValues, contributions) {
+      const ctx = document.getElementById('portfolioChart').getContext('2d');
+      if (portfolioChart) portfolioChart.destroy();
+
+      portfolioChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Depotwert',
+              data: grossValues,
+              tension: 0.28,
+              borderWidth: 3,
+              pointRadius: 0,
+            },
+            {
+              label: 'Einzahlungen',
+              data: contributions,
+              tension: 0.28,
+              borderWidth: 2,
+              pointRadius: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              labels: { color: '#eef2ff' }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${fmt.format(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#b9c3e6' },
+              grid: { color: 'rgba(255,255,255,0.08)' }
+            },
+            y: {
+              ticks: {
+                color: '#b9c3e6',
+                callback: value => fmt.format(value)
+              },
+              grid: { color: 'rgba(255,255,255,0.08)' }
+            }
+          }
+        }
+      });
+    }
+
+    function runSimulation() {
+      const startCapital = Math.max(0, Number(document.getElementById('startCapital').value) || 0);
+      const monthlySavingsInput = Math.max(0, Number(document.getElementById('monthlySavings').value) || 0);
+      const yearsInput = Math.max(1, Number(document.getElementById('years').value) || 1);
+      const annualReturn = Math.max(0, Number(document.getElementById('annualReturn').value) || 0) / 100;
+      const inflation = Math.max(0, Number(document.getElementById('inflation').value) || 0) / 100;
+      const taxRate = Math.max(0, Number(document.getElementById('taxRate').value) || 0) / 100;
+      const mode = document.getElementById('mode').value;
+
+      let years = yearsInput;
+      let monthlySavings = monthlySavingsInput;
+
+      if (mode === 'child18') {
+        years = 60;
+      } else if (mode === 'child60') {
+        years = 60;
+      }
+
+      let value = startCapital;
+      let invested = startCapital;
+      const monthlyRate = Math.pow(1 + annualReturn, 1 / 12) - 1;
+      const labels = [];
+      const grossValues = [];
+      const contributionValues = [];
+      const rows = [];
+
+      for (let year = 1; year <= years; year++) {
+        for (let month = 1; month <= 12; month++) {
+          let effectiveMonthlySavings = monthlySavings;
+
+          if (mode === 'child18' && year > 18) {
+            effectiveMonthlySavings = 0;
+          }
+          if (mode === 'child60') {
+            effectiveMonthlySavings = monthlySavings;
+          }
+          if (mode === 'standard') {
+            effectiveMonthlySavings = monthlySavings;
+          }
+
+          value = value * (1 + monthlyRate) + effectiveMonthlySavings;
+          invested += effectiveMonthlySavings;
+        }
+
+        const gain = value - invested;
+        labels.push(`Jahr ${year}`);
+        grossValues.push(Math.round(value));
+        contributionValues.push(Math.round(invested));
+        rows.push({ year, invested, value, gain });
+      }
+
+      const gain = Math.max(0, value - invested);
+      const taxes = gain * taxRate;
+      const finalNet = value - taxes;
+      const realValue = finalNet / Math.pow(1 + inflation, years);
+
+      document.getElementById('finalGross').textContent = fmt.format(value);
+      document.getElementById('taxes').textContent = fmt.format(taxes);
+      document.getElementById('finalNet').textContent = fmt.format(finalNet);
+      document.getElementById('realValue').textContent = fmt.format(realValue);
+
+      yearTableBody.innerHTML = rows.map(row => `
+        <tr>
+          <td>${row.year}</td>
+          <td>${fmt.format(row.invested)}</td>
+          <td>${fmt.format(row.value)}</td>
+          <td>${fmt.format(row.gain)}</td>
+        </tr>
+      `).join('');
+
+      createChart(labels, grossValues, contributionValues);
+    }
+
+    runSimulation();
+  </script>
+</body>
+</html>
