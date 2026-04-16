@@ -603,6 +603,49 @@ input[type=range]::-moz-range-thumb {
   transition:width .8s cubic-bezier(.34,1.2,.64,1);
 }
 
+/* sticky scenario params */
+.params-card {
+  background:white;
+  border:var(--border);
+  border-radius:var(--radius);
+  padding:22px 22px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+.params-card h3 {
+  font-family:'Playfair Display',serif;
+  font-size:.98rem;
+  color:var(--forest);
+  margin-bottom:14px;
+}
+.params-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+}
+.param-box {
+  background:var(--cream);
+  border-radius:var(--radius-sm);
+  padding:14px 14px;
+  border:1px solid rgba(28,58,42,.06);
+}
+.param-label {
+  display:block;
+  font-size:.68rem;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--text-light);
+  margin-bottom:6px;
+}
+.param-value {
+  font-family:'Playfair Display',serif;
+  font-size:1.05rem;
+  font-weight:700;
+  color:var(--forest);
+  line-height:1.2;
+}
+
 /* scenario table */
 .scen-title {
   font-family:'Playfair Display',serif;
@@ -644,6 +687,7 @@ footer strong { color:rgba(255,255,255,.75); }
   .hbox{flex-direction:column;padding:24px 20px}
   .controls-card{padding:22px 18px}
   .ctrl-grid{grid-template-columns:1fr 1fr}
+  .params-grid{grid-template-columns:1fr 1fr}
   table.styled th,table.styled td{padding:9px 11px;font-size:.8rem}
 }
 </style>
@@ -661,7 +705,7 @@ footer strong { color:rgba(255,255,255,.75); }
 
 <!-- ═══════════════════════════════════
      PAGE 1  ·  WISSEN
-═══════════════════════════════════ -->
+════════════════════════════════════ -->
 <div id="p1" class="page active">
 
 <!-- HERO -->
@@ -1143,7 +1187,7 @@ footer strong { color:rgba(255,255,255,.75); }
 
 <!-- ═══════════════════════════════════
      PAGE 2  ·  SIMULATOR
-═══════════════════════════════════ -->
+════════════════════════════════════ -->
 <div id="p2" class="page">
 
 <div class="sim-hero">
@@ -1278,6 +1322,29 @@ footer strong { color:rgba(255,255,255,.75); }
 
   <!-- Custom Scenario Table -->
   <div class="scen-title">🔢 Szenarien mit deinen aktuellen Einstellungen</div>
+
+  <div class="params-card">
+    <h3>🧭 Aktive Parameter für die Szenarien-Tabelle</h3>
+    <div class="params-grid">
+      <div class="param-box">
+        <span class="param-label">Monatliche Rate</span>
+        <div class="param-value" id="sp-monthly">–</div>
+      </div>
+      <div class="param-box">
+        <span class="param-label">Startkapital</span>
+        <div class="param-value" id="sp-start">–</div>
+      </div>
+      <div class="param-box">
+        <span class="param-label">Anlagedauer</span>
+        <div class="param-value" id="sp-years">–</div>
+      </div>
+      <div class="param-box">
+        <span class="param-label">Rendite p.a.</span>
+        <div class="param-value" id="sp-return">–</div>
+      </div>
+    </div>
+  </div>
+
   <div class="table-wrap">
     <table class="styled">
       <thead>
@@ -1286,8 +1353,7 @@ footer strong { color:rgba(255,255,255,.75); }
           <th>Eingezahlt</th>
           <th>Endvermögen</th>
           <th>Renditegewinn</th>
-          <th>Faktor</th>
-        </tr>
+                  </tr>
       </thead>
       <tbody id="scen-body"></tbody>
     </table>
@@ -1425,6 +1491,11 @@ function updateSim() {
   document.getElementById('v-years').innerHTML   = years + ' <small>Jahre</small>';
   document.getElementById('v-return').innerHTML  = ret.toFixed(1) + ' <small>%</small>';
 
+  document.getElementById('sp-monthly').textContent = monthly.toLocaleString('de-DE') + ' € / Monat';
+  document.getElementById('sp-start').textContent   = start.toLocaleString('de-DE') + ' €';
+  document.getElementById('sp-years').textContent   = years + ' Jahre';
+  document.getElementById('sp-return').textContent  = ret.toFixed(1).replace('.',',') + ' % p.a.';
+
   const { labels, totalVals, paidVals, retVals } = calcSeries(monthly, start, years, ret);
   const endVal   = totalVals[totalVals.length - 1];
   const paidVal  = paidVals[paidVals.length - 1];
@@ -1533,7 +1604,6 @@ function updateSim() {
       <td>${fmtEur(pv)}</td>
       <td class="${r===monthly?'':'good'}">${fmtEur(ev)}</td>
       <td class="good">+${fmtEur(gv)}</td>
-      <td>${fv}x</td>
     </tr>`;
   });
   document.getElementById('scen-body').innerHTML = tbody;
